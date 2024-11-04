@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UserRegistration.Data;
+using UserRegistration.Mapping;
 using UserRegistration.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.Services.AddDbContext<ApplicationDbContext>
     (options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnections")));
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
 
