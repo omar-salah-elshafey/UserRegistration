@@ -23,8 +23,47 @@ namespace UserRegistration.Services
                 return new ResponseModel {isCreated = false, Message = "Age must be at least 20" };
             if (!IsValidEmail(registrationModel.Email))
                 return new ResponseModel { isCreated = false, Message = "Please Enter a valid Email" };
+            var emailExists = await _context.Users.AnyAsync(u => u.Email == registrationModel.Email);
+            if (emailExists)
+            {
+                return new ResponseModel
+                {
+                    isCreated = false,
+                    Message = "An account with this email already exists."
+                };
+            }
             if (!IsValidMobileNumber(registrationModel.PhoneNumber))
                 return new ResponseModel { isCreated = false, Message = "Please Enter a valid Mobile Number" };
+
+            var validGovernorates = await _context.Governorates.Select(g => g.Name).ToListAsync();
+            foreach (var address in registrationModel.Addresses)
+            {
+                // Validate the governorate name
+                if (!validGovernorates.Contains(address.Governate))
+                {
+                    return new ResponseModel
+                    {
+                        isCreated = false,
+                        Message = $"Governorate '{address.Governate}' is not valid."
+                    };
+                }
+
+                // Fetch valid cities for this governorate
+                var validCities = await _context.Cities
+                    .Where(c => c.Governorate.Name == address.Governate)
+                    .Select(c => c.Name)
+                    .ToListAsync();
+
+                // Validate the city name
+                if (!validCities.Contains(address.City))
+                {
+                    return new ResponseModel
+                    {
+                        isCreated = false,
+                        Message = $"City '{address.City}' is not valid for the governorate '{address.Governate}'."
+                    };
+                }
+            }
 
             var registeredUser = _mapper.Map<User>(registrationModel);
 
